@@ -9,7 +9,6 @@ verify_ssl = true
 Flask-JWT = "*"
 Flask-RESTful = "*"
 Flask-SQLAlchemy = "*"
-flask = "*"
 
 [requires]
 python_version = "3.8"
