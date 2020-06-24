@@ -4,9 +4,12 @@ from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
     jwt_refresh_token_required,
-    get_jwt_identity
+    get_jwt_identity,
+    jwt_required,
+    get_raw_jwt
 )
 from models.user import UserModel
+from blacklist import BLACKLIST
 
 _user_parser = reqparse.RequestParser()
 _user_parser.add_argument('username',
@@ -73,9 +76,25 @@ class UserLogin(Resource):
 
         return {"message": "Invalid Credentials!"}, 401
 
+
+class UserLogout(Resource):
+    @jwt_required
+    def post(self):
+        jti = get_raw_jwt()['jti']  # jti is "JWT ID", a unique identifier for a JWT.
+        BLACKLIST.add(jti)
+        return {"message": "Successfully logged out"}, 200
+
+
 class TokenRefresh(Resource):
     @jwt_refresh_token_required
     def post(self):
+        """
+        Get a new access token without requiring username and password—only the 'refresh token'
+        provided in the /login endpoint.
+        Note that refreshed access tokens have a `fresh=False`, which means that the user may have not
+        given us their username and password for potentially a long time (if the token has been
+        refreshed many times over).
+        """
         current_user = get_jwt_identity()
         new_token = create_access_token(identity=current_user, fresh=False)
         return {'access_token': new_token}, 200
